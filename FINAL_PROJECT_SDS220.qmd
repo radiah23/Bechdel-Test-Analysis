@@ -1,0 +1,126 @@
+---
+title: "SDS 220 Final Project Group 18"
+format:
+  html:
+    embed-resources: true
+author: "Radiah Khan, Bree Gordon"
+editor: visual
+knitr:
+  opts_chunk:
+    message: false
+bibliography: group_18.bib
+csl: apa.csl (1)
+---
+
+```{r}
+library(readr)
+library(tidyverse)
+library(tidyverse)
+library(infer)
+library(kableExtra)
+library(openintro)
+library(broom)
+
+Movies_and_the_Bechdel_Test_movies <- read_csv("Movies and the Bechdel Test - movies (3).csv")
+```
+
+![Namesake Comic](https://s26162.pcdn.co/wp-content/uploads/2021/09/bechdeltestcartoon.jpeg)
+
+# Data Wrangling
+
+```{r}
+cleaned_data <- Movies_and_the_Bechdel_Test_movies |>
+   mutate(gross_income_2013 = rowSums(across(c(domgross_2013, intgross_2013)))) |>
+  select(binary, clean_test, gross_income_2013) |>
+  drop_na(gross_income_2013)
+```
+
+```{r}
+cleaned_data |>
+  group_by(binary, clean_test) |>
+  summarize(mean = mean(gross_income_2013)) |>
+  library(dplyr)
+
+
+  mutate(test = case_when(
+    clean_test == "ok" ~ "Not talking about men",
+    clean_test == "dubious" ~ "Unsure of the conversations",
+    clean_test == "men" ~ "Only talk about men",
+    clean_test == "notalk" ~ "Not talking to each other",
+    TRUE ~ clean_test
+  ))
+
+```
+
+```{r}
+ggplot(data = cleaned_data, aes(x = gross_income_2013,
+                                )) +
+  geom_density(aes(color = binary)) +
+  scale_x_continuous(labels = scales ::comma) +
+  labs(title = )
+  theme_minimal() 
+```
+
+```{r}
+cleaned_data |>
+  group_by(clean_test) |>
+  summarize(n = n(), mean = mean(gross_income_2013),
+            sd = sd(gross_income_2013),
+            min = min(gross_income_2013),
+            max = max(gross_income_2013))
+```
+
+```{r}
+aov(gross_income_2013 ~ clean_test, data = cleaned_data) |>
+  tidy()
+```
+
+p-value = 0.000103
+
+```{r}
+obs_stat <- cleaned_data |>
+  specify(gross_income_2013 ~ clean_test) |>
+  calculate(stat = "F")
+obs_stat
+```
+
+F-Statistic = 5.90
+
+```{r}
+set.seed(2346)
+null_dist <- cleaned_data |>
+specify(gross_income_2013 ~ clean_test) |>
+hypothesize(null = "independence") |>
+generate(reps = 1000, type = "permute") |>
+calculate(stat = "F")
+```
+
+```{r}
+null_dist |>
+  visualise() +
+  shade_p_value(obs_stat = obs_stat, direction = "greater")
+```
+
+```{r}
+null_dist |> get_p_value(obs_stat = obs_stat, direction = "greater")
+```
+
+p-value = 0, therefore we reject our null hypothesis and accept our alternative hypothesis. The mean
+
+### ANOVA Post-Hoc Test:
+
+```{r}
+test_results <- pairwise.t.test(x = cleaned_data$gross_income_2013,
+                                g = cleaned_data$clean_test,
+                                pool.sd = F, paired = F,
+                                p.adjust.method = "bonferroni")
+test_results
+```
+
+# Data Visualization
+
+1.  Visualize the 4 groups
+2.  Write just well enough to draft it (like write the conclusion)
+3.  Hide the code chunks
+
+According to @bechdel_inspiration, women's representation in movies has increased on average since 1970.
